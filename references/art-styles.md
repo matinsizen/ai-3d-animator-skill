@@ -1,4 +1,4 @@
-# Phase 1 — Art Direction: The 8 Style Bibles
+# Phase 1 — Art Direction: The 14 Style Bibles
 
 Each style below is a complete production recipe: identity, palette, geometry rules, material values (Three.js **and** Blender), lighting, motion personality, and sound personality. Follow one bible exactly — consistency is what makes output look designed rather than assembled.
 
@@ -11,8 +11,18 @@ Each style below is a complete production recipe: identity, palette, geometry ru
 6. [Neon / Cyberpunk](#6-neon--cyberpunk)
 7. [Cel / Anime](#7-cel--anime)
 8. [Frosted Glass](#8-frosted-glass)
+9. [Realistic PBR](#9-realistic-pbr)
+10. [Cartoon Bold](#10-cartoon-bold)
+11. [Retro PS1](#11-retro-ps1)
+12. [Steampunk & Industrial](#12-steampunk--industrial)
+13. [Dark Fantasy](#13-dark-fantasy)
+14. [Minimal Flat](#14-minimal-flat)
 
 Plus: [style chooser](#style-chooser), [consistency rules](#consistency-rules), [blending rule](#blending-rule).
+
+> 🎨 **See them all rendered:** open `docs/style-lab/index.html` (or the live
+> Style Lab on GitHub Pages) — the same subject art-directed 14 ways. Use it to
+> show the user options during intake.
 
 ---
 
@@ -192,6 +202,130 @@ Plus: [style chooser](#style-chooser), [consistency rules](#consistency-rules), 
 
 ---
 
+## 9. Realistic PBR
+
+**Identity:** Believable materials, film-grade light. Nothing cartoonish; the camera behaves like a real lens.
+
+**Palette (muted, value-structured):** `#DDE5EC` sky-fill · `#9AA8B0` concrete · `#6F8F6A` foliage · `#5D4A38` wood · `#E8E2D6` ceramic/cloth · accent **one** saturated color max (e.g. `#C25B4E`) used on ≤10% of surfaces.
+
+**Geometry:** real-world proportions, bevels 1–3 mm on every hard edge (micro-bevel catches highlights and reads "manufactured"), high-res silhouettes on hero objects only; never spend polygons where the camera won't look.
+
+**Materials (the style lives here):**
+- Three.js: `MeshPhysicalMaterial` with per-part roughness maps via `roughness: 0.35–0.8`; metals `metalness 1.0 + roughness 0.25`; always `scene.environment` (RoomEnvironment or an HDRI via `RGBELoader`) — PBR without an env map is dead plastic. ACES tone mapping, exposure 1.0–1.1.
+- Blender: Principled BSDF with believable values (dielectric Roughness 0.3–0.6, Metallic 0/1 — never 0.5), Cycles 128–512 samples with OpenImageDenoise, Filmic/AgX view transform.
+
+**Lighting:** one dominant motivated source (sun through window, practical lamp) + HDRI fill; shadows are soft-edged but present; rim/separation light at 10–20% of key. Blender: 3-area studio for product, sun+sky for exterior.
+
+**Camera:** 35–85 mm equivalents, shallow DOF only when it isolates subject, handheld micro-shake (±0.15° noise) for doc feel, locked-off tripod for product.
+
+**Motion:** ease everything, but *restrained* — overshoot ≤3%, no cartoony squash. Simulations (cloth, rigid body, fluid) belong here.
+
+**Sound:** sub-bass room tone, foley-realistic impacts, no musical stingers unless asked. Ambience > music.
+
+**Do:** contact shadows, subtle surface variation (noise bump), color-grade in post. **Don't:** 100% saturated albedo, mirror-sharp everything, pastel backgrounds.
+
+---
+
+## 10. Cartoon Bold
+
+**Identity:** Saturday-morning energy — saturated primaries, thick ink outlines, big shapes, confident exaggeration.
+
+**Palette:** `#FF6B6B` red · `#FFD93D` yellow · `#4ECDC4` teal · `#1A535C` deep teal · `#F7FFF7` white · background `#FFEC99` or `#D4F1F4`.
+
+**Geometry:** rounded silhouettes with a few BIG shapes (a nose, a backpack, a fist) — scale contrast > detail count. `RoundedBoxGeometry` + spheres; bevel generous (15–20%).
+
+**Materials:** Three.js `MeshStandardMaterial` roughness 0.55–0.7 (soft matte, *slight* gloss on eyes) + **inverted-hull outlines**: duplicate mesh, `BackSide`, black, scale 1.05–1.07 (bigger for small parts). Blender: Freestyle lines (thickness 3–5 px) or Solidify+Backface.
+
+**Lighting:** bright, even, cheerful — hemisphere 0.7 + key 1.3; shadows stay light (opacity feel). No moody rim lights.
+
+**Motion:** the most expressive style — overshoot 8–12%, anticipation 4–8 frames, occasional 2-frame holds at pose extremes, head-tilts ±15°. Everything reacts: eyebrows, ears, antennae get their own follow-through layer.
+
+**Sound:** comedic woodblock, kazoo/brass stings, slide whistle for jumps, big boingy impacts. Music: bright ukulele/pop, 110–130 BPM.
+
+**Do:** smear frames on fast moves (scale 3× along motion for 1–2 frames), colored outlines (dark of the fill) instead of pure black for softer casts. **Don't:** realistic textures, muted colors, slow floaty pacing.
+
+---
+
+## 11. Retro PS1
+
+**Identity:** 1998 3D — low polygons, vertex-lit look, fog, chunky pixels. Nostalgia with teeth.
+
+**Palette:** desaturated darks: `#23233A` night · `#3E6D64` teal shadow · `#9C5B4E` rust · `#C8B896` bone · `#6A5D7A` dusk purple. Background: near-black `#14141F`.
+
+**Geometry:** brutal budget — spheres 8×6 segments, boxes, no smooth curves; jitter vertices ±2% for hand-placed wobble. No bevels, no subsurf.
+
+**Materials:** Three.js `MeshLambertMaterial` (vertex-lit look — no specular) or `MeshBasicMaterial` for unlit props; `flatShading: true`. **Pixelation is the fingerprint:** render at 1/3 resolution and upscale with `image-rendering: pixelated` (or Blender: render 640×480, nearest-neighbor upscale). Affine texture warp is optional authenticity (skip unless committed).
+
+**Lighting:** one hard sun or point light + heavy distance fog (`Fog(bg, 6, 26)`) — fog IS the atmosphere. Everything at the edges dissolves.
+
+**Motion:** stiff, 15–20 fps feel; snap turns in 90° steps; camera cuts hard (no smooth orbits); tank-like character turns.
+
+**Sound:** lo-fi drum machine, PS1 startup-style pads, vinyl hiss, low-res UI blips. Music: dark ambient or jungle, 130–160 BPM.
+
+**Do:** dithered gradients, CRT vignette overlay, chunky UI text. **Don't:** smooth shading, high-poly anything, bright daylight.
+
+---
+
+## 12. Steampunk & Industrial
+
+**Identity:** brass, copper, rivets, steam — Victorian machinery with warm workshop light.
+
+**Palette:** `#B08D57` brass · `#8C5A3C` copper · `#5A3E26` dark wood · `#2B1D12` background · `#7C8B3F` oxidized brass · glow `#FFB347` (furnace, lamps).
+
+**Geometry:** cylinders + tori (pipes, boilers, gears), riveted plates (small spheres along seams), gauges (cylinder + emissive dial). High metalness everywhere structural.
+
+**Materials:** Three.js `MeshStandardMaterial` `metalness 0.85, roughness 0.35–0.5`, with `envMap` (needed for metal); wood parts roughness 0.8 metalness 0. Blender: Metallic 0.9/Roughness 0.4 + Noise Texture bump for grime.
+
+**Lighting:** warm workshop — key `#FFC98A`, strong orange practicals (furnaces, bulbs) as emissive + PointLights, dust motes (tiny emissive spheres drifting) sell the air. World `#2B1D12` strength 0.3.
+
+**Motion:** mechanical logic — gears rotate at linked ratios, pistons stroke, steam puffs (spheres growing + fading), everything with satisfying clunks. Easing: constant rotation for machines, eased otherwise.
+
+**Sound:** hiss, clank, ratchet clicks, creaking wood, low boiler rumble. Music: industrial folk, accordion or cello, 90–110 BPM.
+
+**Do:** show the mechanism working (a gear that turns for no reason is set dressing; one that drives something is a story). **Don't:** clean shiny metal (add roughness variation), cool white light.
+
+---
+
+## 13. Dark Fantasy
+
+**Identity:** mist, stone, cold light, weight. Souls-like gravity — every move costs something.
+
+**Palette:** `#14161D` background · `#2E3440` stone · `#5A6478` armor slate · `#3B4252` iron · rim `#7FD8FF` cold moonlight · ember accent `#D08770` (candles, forge).
+
+**Geometry:** heavy silhouettes, tall proportions, layered cloth/armor masses; keep silhouettes readable against fog.
+
+**Materials:** low saturation, roughness 0.6–0.8, metalness only on weapons/armor (0.8 + roughness 0.45). Cloth: sheen 0.3. Stone: subtle noise bump.
+
+**Lighting:** near-darkness + motivated pools: one cold rim (the defining look), warm ember points, volumetric-feel via dense fog (`Fog(#14161D, 7, 30)`). Blender: Cycles + volume scatter for god rays.
+
+**Motion:** slow, deliberate, weighted — anticipation doubled, overshoot nearly zero, cape/cloth lags with big offsets. Camera: slow push-ins, long holds, subtle drift; never whip.
+
+**Sound:** distant bells, wind, creaking leather, deep drums, sparse choir. Silence is a tool — leave 2–3 s of it after reveals.
+
+**Do:** negative space, one hero light source per shot, particles (ash/embers/dust). **Don't:** bright fills, pastel anything, fast comedic timing.
+
+---
+
+## 14. Minimal Flat
+
+**Identity:** vector-poster 3D — unlit flat colors, clean shapes, Swiss composition. Information first.
+
+**Palette (4–5):** `#FFFFFF` background · `#FF6B6B` · `#4ECDC4` · `#45B7D1` · `#2B2D42` text/ink.
+
+**Geometry:** primitives with almost no detail; axis-aligned compositions; consistent corner radius everywhere (pick one radius, use it for every rounded edge).
+
+**Materials:** Three.js `MeshBasicMaterial` (truly flat) or `MeshStandardMaterial + hemisphere only` for the faintest form; **no shadows** (or a single flat-color ellipse under the subject). Blender: Emission shader at 1.0 + color ramp — or EEVEE with zero specular.
+
+**Lighting:** none in the photographic sense — light IS the material color. If form is needed, add one hemisphere light at 0.8 max.
+
+**Motion:** informative — slide/fade/pulse with `easeOutCubic`; objects arrive on the beat grid (every move lands on a multiple of the BPM); nothing bounces.
+
+**Sound:** soft UI ticks, single piano notes on reveals, no ambience. Music: minimal piano/marimba, 80–100 BPM, mixed LOW.
+
+**Do:** generous negative space, one accent color per scene, typographic integration (3D + HTML overlays). **Don't:** gradients, textures, glow, realistic materials.
+
+---
+
 ## Style chooser
 
 | User says / context | Pick |
@@ -204,6 +338,12 @@ Plus: [style chooser](#style-chooser), [consistency rules](#consistency-rules), 
 | "neon", "cyberpunk", "gamer", "night", "Tron", "music" | **Neon / Cyberpunk** |
 | "anime", "cartoon", "comic", "Dragon Ball" | **Cel / Anime** |
 | "premium", "product", "apple-style", "glass", "clean" | **Frosted Glass** |
+| "realistic", "photoreal", "film", "archviz", "simulation" | **Realistic PBR** |
+| "pixar"-adjacent, "bold", "vibrant", "toy commercial", " kids TV" | **Cartoon Bold** |
+| "PS1", "PSX", "90s 3D", "horror retro", "haunted PS1 game" | **Retro PS1** |
+| "steampunk", "brass", "victorian", "industrial", "gears", "factory" | **Steampunk & Industrial** |
+| "dark fantasy", "moody", "gothic", "souls-like", "mist" | **Dark Fantasy** |
+| "flat", "corporate", "infographic", "swiss", "vector look" | **Minimal Flat** |
 | Brand colors provided | Nearest style, then swap palette (keep value structure: light bg ↔ dark bg) |
 
 ## Consistency rules

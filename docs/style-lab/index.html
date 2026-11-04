@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Style Lab — 14 art styles · Pro 3D Animator</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #101418; overflow: hidden; }
+  #app { position: fixed; inset: 0; }
+  #app canvas { width: 100% !important; height: 100% !important; }
+  #hud { position: fixed; left: 12px; top: 12px; display: flex; flex-wrap: wrap; gap: 6px; max-width: 640px;
+         font: 12px/1.5 system-ui, sans-serif; }
+  #hud a { background: #ffffff14; color: #fff; border-radius: 999px; padding: 5px 12px; text-decoration: none;
+           backdrop-filter: blur(6px); border: 1px solid #ffffff22; }
+  #hud a.active { background: #FF6B6B; border-color: #FF6B6B; font-weight: 700; }
+  #hud a:hover { background: #ffffff2a; }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="hud"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+  STYLE LAB — the same subject (blob character + tree + island) art-directed
+  14 different ways. Proves that "art style" is a system:
+      palette + geometry language + material values + lighting rig + motion.
+  URL:  ?style=puffy   &still=1&t=1.2&res=1280x720   (headless render contract)
+═════════════════════════════════════════════════════════════════════════ -->
+
+<script type="importmap">
+{ "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ── 14 STYLE CONFIGS (condensed from references/art-styles.md) ───────────── */
+const P = (c) => new THREE.Color(c);
+const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: P(c), ...o });
+const phys = (c, o = {}) => new THREE.MeshPhysicalMaterial({ color: P(c), ...o });
+const basic = (c) => new THREE.MeshBasicMaterial({ color: P(c) });
+const emissive = (c, i = 2.4) => new THREE.MeshStandardMaterial({ color: P('#0A0A12'), emissive: P(c), emissiveIntensity: i, roughness: 0.4 });
+
+export const STYLES = {
+  puffy: {
+    label: 'Puffy / Bubbly', bg: '#FFF6EC', slab: '#B7E4C7', blob: '#FFADAD', tree: '#74C69D', trunk: '#B08968',
+    mat: (c) => phys(c, { roughness: 0.42, clearcoat: 0.5, clearcoatRoughness: 0.5, sheen: 0.4, sheenColor: P('#FFFFFF') }),
+    segs: [48, 32], radius: 0.9,
+  },
+  clay: {
+    label: 'Claymation', bg: '#F4EDE1', slab: '#D9C7A7', blob: '#D98E73', tree: '#7A9E7E', trunk: '#8C5A3C',
+    mat: (c) => std(c, { roughness: 0.92 }), segs: [36, 24], radius: 0.5,
+  },
+  lowpoly: {
+    label: 'Low-poly Flat', bg: '#FDF6EC', slab: '#2A9D8F', blob: '#E76F51', tree: '#2A9D8F', trunk: '#264653',
+    mat: (c) => std(c, { roughness: 0.8, flatShading: true }), segs: [10, 7], radius: 0,
+  },
+  voxel: {
+    label: 'Voxel', bg: '#F7F7F5', slab: '#06D6A0', blob: '#EF476F', tree: '#118AB2', trunk: '#073B4C',
+    mat: (c) => std(c, { roughness: 0.7 }), segs: [4, 3], radius: 0, blocky: true,
+  },
+  iso: {
+    label: 'Isometric Diorama', bg: '#F7F3E9', slab: '#B8E0D2', blob: '#E76F51', tree: '#96C7B2', trunk: '#3D405B',
+    mat: (c) => std(c, { roughness: 0.7 }), segs: [36, 24], radius: 0.6, ortho: true,
+  },
+  neon: {
+    label: 'Neon / Cyberpunk', bg: '#05060F', slab: '#0A0F1E', blob: '#101528', tree: '#0D1424', trunk: '#1A2032',
+    mat: (c) => std(c, { roughness: 0.35, metalness: 0.8 }), segs: [40, 28], radius: 0.5,
+    neon: '#00F5D4', fog: [8, 34],
+  },
+  cel: {
+    label: 'Cel / Anime', bg: '#FFFDF5', slab: '#8FCB9B', blob: '#F28F6B', tree: '#63B46F', trunk: '#5C4033',
+    mat: null, toon: true, segs: [32, 22], radius: 0.4, outline: 1.035,
+  },
+  glass: {
+    label: 'Frosted Glass', bg: '#EAF6FF', slab: '#CFE9F7', blob: '#FFFFFF', tree: '#BFE3F2', trunk: '#9CC8DE',
+    mat: (c) => phys(c, { transmission: 1, thickness: 1.4, ior: 1.45, roughness: 0.18, clearcoat: 0.6, transparent: true }),
+    segs: [48, 32], radius: 0.8, env: 1.0,
+  },
+  realistic: {
+    label: 'Realistic PBR', bg: '#DDE5EC', slab: '#9AA8B0', blob: '#E8E2D6', tree: '#6F8F6A', trunk: '#5D4A38',
+    mat: (c) => phys(c, { roughness: 0.55, clearcoat: 0.15 }), segs: [64, 44], radius: 0.7, env: 0.7,
+  },
+  cartoon: {
+    label: 'Cartoon Bold', bg: '#FFEC99', slab: '#63E6BE', blob: '#FF6B6B', tree: '#38D9A9', trunk: '#F76707',
+    mat: (c) => std(c, { roughness: 0.6 }), segs: [32, 22], radius: 0.6, outline: 1.06,
+  },
+  ps1: {
+    label: 'Retro PS1', bg: '#23233A', slab: '#3E6D64', blob: '#9C5B4E', tree: '#3E6D64', trunk: '#4A3B2F',
+    mat: (c) => new THREE.MeshLambertMaterial({ color: P(c), flatShading: true }), segs: [8, 6], radius: 0,
+    pixel: 3, fog: [6, 26],
+  },
+  steampunk: {
+    label: 'Steampunk', bg: '#2B1D12', slab: '#6E4F2F', blob: '#B08D57', tree: '#7C8B3F', trunk: '#5A3E26',
+    mat: (c) => std(c, { roughness: 0.35, metalness: 0.85 }), segs: [40, 28], radius: 0.4, key: '#FFC98A', rim: '#FF9E4A',
+  },
+  fantasy: {
+    label: 'Dark Fantasy', bg: '#14161D', slab: '#2E3440', blob: '#5A6478', tree: '#3B4252', trunk: '#2E3440',
+    mat: (c) => std(c, { roughness: 0.65, metalness: 0.15 }), segs: [44, 30], radius: 0.6,
+    rim: '#7FD8FF', fog: [7, 30],
+  },
+  minimal: {
+    label: 'Minimal Flat', bg: '#FFFFFF', slab: '#EEEEEE', blob: '#FF6B6B', tree: '#4ECDC4', trunk: '#45B7D1',
+    mat: (c) => basic(c), segs: [32, 22], radius: 0.6, flat: true,
+  },
+};
+
+/* ── URL params ───────────────────────────────────────────────────────────── */
+const Q = new URLSearchParams(location.search);
+const KEY = Q.get('style') ?? 'puffy';
+const S = STYLES[KEY] ?? STYLES.puffy;
+const STILL = Q.get('still') !== null;
+const stillT = STILL ? parseFloat(Q.get('t') ?? '1.2') : 0;
+const LOOP = 4;
+const W = STILL ? parseInt((Q.get('res') ?? '1280x720').split('x')[0]) : 960;
+const H = STILL ? parseInt((Q.get('res') ?? '1280x720').split('x')[1]) : 540;
+
+/* ── renderer ─────────────────────────────────────────────────────────────── */
+const renderer = new THREE.WebGLRenderer({ antialias: !S.pixel, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(S.pixel ? Math.round(W / S.pixel) : W, S.pixel ? Math.round(H / S.pixel) : H, false);
+renderer.shadowMap.enabled = !S.flat;
+renderer.shadowMap.type = S.flat ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
+renderer.toneMapping = (KEY === 'realistic' || KEY === 'glass' || KEY === 'neon') ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+renderer.toneMappingExposure = KEY === 'realistic' ? 1.05 : 1.12;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.getElementById('app').appendChild(renderer.domElement);
+
+/* ── scene ────────────────────────────────────────────────────────────────── */
+const scene = new THREE.Scene();
+scene.background = P(S.bg);
+if (S.fog) scene.fog = new THREE.Fog(S.bg, S.fog[0], S.fog[1]);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = S.env ?? (S.mat ? 0.25 : 0);
+
+/* ── lights (per style) ───────────────────────────────────────────────────── */
+if (!S.flat) {
+  const hemi = new THREE.HemisphereLight(KEY === 'neon' ? '#334' : '#FFF3E0', KEY === 'neon' ? '#001' : '#D9CFC4', S.flat ? 0 : 0.55);
+  scene.add(hemi);
+  const key = new THREE.DirectionalLight(S.key ?? '#FFFFFF', KEY === 'lowpoly' ? 2.2 : 1.6);
+  key.position.set(KEY === 'lowpoly' ? 8 : 6, KEY === 'lowpoly' ? 4 : 9, 6);
+  if (!S.pixel && !S.flat) { key.castShadow = true; key.shadow.mapSize.set(2048, 2048); }
+  if (key.castShadow) {
+    Object.assign(key.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
+    key.shadow.camera.updateProjectionMatrix();
+    key.shadow.bias = -0.0002; key.shadow.normalBias = 0.02;
+  }
+  scene.add(key);
+  const fill = new THREE.DirectionalLight('#CFE3FF', 0.5); fill.position.set(-7, 4, -2); scene.add(fill);
+  const rim = new THREE.DirectionalLight(S.rim ?? '#FFD1DC', S.rim ? 1.6 : 0.7); rim.position.set(-2, 6, -8); scene.add(rim);
+  if (S.neon) {
+    const n1 = new THREE.PointLight(P(S.neon), 60, 20); n1.position.set(2.5, 2.2, 2.5); scene.add(n1);
+    const n2 = new THREE.PointLight(P('#F15BB5'), 45, 18); n2.position.set(-3, 1.6, -2); scene.add(n2);
+  }
+}
+
+/* ── materials ────────────────────────────────────────────────────────────── */
+const toonMap = (() => {  // 3-step gradient map for cel
+  const data = new Uint8Array([90, 204, 255]);
+  const tex = new THREE.DataTexture(data, 3, 1, THREE.RedFormat);
+  tex.needsUpdate = true; tex.minFilter = tex.magFilter = THREE.NearestFilter;
+  return tex;
+})();
+const MAT = (c) => S.toon ? new THREE.MeshToonMaterial({ color: P(c), gradientMap: toonMap }) : S.mat(c);
+const mSlab = MAT(S.slab), mBlob = MAT(S.blob), mTree = MAT(S.tree), mTrunk = MAT(S.trunk);
+const mWhite = S.flat ? basic('#FFFFFF') : std('#FFFFFF', { roughness: 0.25 });
+const mPupil = S.flat ? basic('#2B2320') : std('#2B2320', { roughness: 0.3 });
+const mCheek = S.flat ? basic('#FFB3C1') : std('#FFB3C1', { roughness: 0.5, transparent: true, opacity: 0.75 });
+const mOutline = new THREE.MeshBasicMaterial({ color: P('#1A1A1A'), side: THREE.BackSide });
+const outlineMesh = (mesh, k) => { const o = new THREE.Mesh(mesh.geometry, mOutline); o.scale.setScalar(k ?? S.outline); mesh.add(o); };
+
+/* ── subject: island + blob character + tree + cloud ──────────────────────── */
+const slabGeo = S.blocky
+  ? new THREE.BoxGeometry(10, 1.6, 8)
+  : new RoundedBoxGeometry(10, 1.6, 8, 5, Math.max(0.05, S.radius * 0.45));
+const slab = new THREE.Mesh(slabGeo, mSlab);
+slab.position.y = -0.8; slab.receiveShadow = true; slab.castShadow = true;
+if (S.neon || KEY === 'fantasy') slab.material.emissive = P(S.neon ?? '#3A4A6B'), slab.material.emissiveIntensity = S.neon ? 0.25 : 0.12;
+scene.add(slab);
+
+/* blob character — origin at contact point, hops once per 4 s loop */
+const blobG = new THREE.Group(); scene.add(blobG);
+const blobGeo = new THREE.SphereGeometry(0.9, S.segs[0], S.segs[1]); blobGeo.translate(0, 0.9, 0);
+const blob = new THREE.Mesh(blobGeo, mBlob);
+blob.castShadow = true; blobG.add(blob);
+if (S.outline) outlineMesh(blob);
+const eyes = [];
+for (const ex of [-0.28, 0.28]) {
+  const e = new THREE.Mesh(new THREE.SphereGeometry(0.15, Math.max(10, S.segs[0] / 3), Math.max(8, S.segs[1] / 3)), mWhite);
+  e.position.set(ex, 1.22, 0.76);
+  const pu = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), mPupil);
+  pu.position.set(0, 0.01, 0.115); e.add(pu);
+  if (S.outline) outlineMesh(e, 1.12);
+  blob.add(e); eyes.push(e);
+}
+if (S.neon) { blob.material.emissive = P('#16325F'); eyes.forEach(e => { e.material = emissive(S.neon, 3.2); }); }
+if (KEY !== 'ps1' && KEY !== 'minimal' && KEY !== 'neon') {
+  for (const cx of [-0.5, 0.5]) {
+    const c = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), mCheek);
+    c.position.set(cx, 0.94, 0.72); c.scale.set(1.4, 0.8, 0.5); blob.add(c);
+  }
+}
+
+/* tree */
+function makeTree(x, z, s) {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(S.blocky ? new THREE.BoxGeometry(0.35, 1.4, 0.35) : new THREE.CapsuleGeometry(0.18, 0.7, 6, 14), mTrunk);
+  trunk.position.y = 0.55; trunk.castShadow = true; g.add(trunk);
+  const crownGeo = S.blocky ? new THREE.BoxGeometry(1.5, 1.5, 1.5) : new THREE.SphereGeometry(0.62, S.segs[0], S.segs[1]);
+  const crown = new THREE.Mesh(crownGeo, mTree);
+  crown.position.y = 1.55; crown.castShadow = true; g.add(crown);
+  if (!S.blocky) {
+    const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.44, S.segs[0], S.segs[1]), mTree);
+    c2.position.set(0.4, 1.28, 0); g.add(c2);
+  }
+  if (S.outline) outlineMesh(crown);
+  g.scale.setScalar(s); g.position.set(x, 0, z); scene.add(g);
+}
+makeTree(-3.0, -1.6, 1.15); makeTree(3.2, -1.0, 0.85);
+
+/* cloud */
+const cloud = new THREE.Group();
+for (const [dx, dy, r] of [[0, 0, 0.75], [0.7, -0.08, 0.55], [-0.7, -0.1, 0.6]]) {
+  const p = new THREE.Mesh(new THREE.SphereGeometry(r, S.blocky ? 4 : Math.max(8, S.segs[0] / 2), S.blocky ? 3 : Math.max(6, S.segs[1] / 2)), S.flat ? basic('#F1F3F5') : std(S.flat ? '#F1F3F5' : '#FFFFFF', { roughness: 0.65 }));
+  p.position.set(dx, dy, 0); cloud.add(p);
+}
+cloud.scale.setScalar(1.4); cloud.position.set(-2.5, 4.4, -4); scene.add(cloud);
+
+/* ── camera ───────────────────────────────────────────────────────────────── */
+const TARGET = new THREE.Vector3(0, 0.8, 0);
+let camera;
+if (S.ortho) {
+  const d = 7.2, a = (W / H);
+  camera = new THREE.OrthographicCamera(-d * a, d * a, d, -d, 0.1, 60);
+  camera.position.set(9, 9 * 0.816, 9);       // true isometric: az 45°, el 35.264°
+} else {
+  camera = new THREE.PerspectiveCamera(32, W / H, 0.1, 120);
+  camera.position.set(5.2, 3.4, 7.0);
+}
+camera.lookAt(TARGET);
+
+/* ── pose(t) — hop + ambient, loop-safe over 4 s ──────────────────────────── */
+const clamp01 = x => Math.min(1, Math.max(0, x));
+const seg = (t, a, b) => b > a ? clamp01((t - a) / (b - a)) : 1;
+function easeInOutCubic(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+function easeOutBack(x, s = 1.9) { return 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2); }
+function pose(t) {
+  let s = 1, y = 0;
+  if (t < 0.35) s = 1 - 0.18 * seg(t, 0.18, 0.35);
+  else if (t < 0.95) { const p = seg(t, 0.35, 0.95); y = 1.5 * Math.sin(Math.PI * p); s = 1 + 0.16 * Math.sin(Math.PI * p); }
+  else if (t < 1.10) s = 1 - 0.22 * seg(t, 0.95, 1.10);
+  else s = 0.78 + 0.22 * easeOutBack(seg(t, 1.10, 1.85));
+  const r = 1 / Math.sqrt(s);
+  blobG.scale.set(r, s, r); blobG.position.y = y;
+  blobG.rotation.z = 0.06 * Math.sin(Math.PI * seg(t, 0.35, 0.95));
+  cloud.position.x = -2.5 + 0.4 * Math.sin(2 * Math.PI * t / LOOP);
+  cloud.position.y = 4.4 + 0.15 * Math.sin(4 * Math.PI * t / LOOP);
+  const blink = seg(t % LOOP, 2.8, 2.86) * (1 - seg(t % LOOP, 2.92, 2.98));
+  eyes.forEach(e => e.scale.y = 1 - 0.85 * blink);
+  if (S.neon) blob.material.emissiveIntensity = 0.5 + 0.3 * Math.sin(2 * Math.PI * t / LOOP * 2);
+}
+
+/* ── HUD (hidden in still mode) ───────────────────────────────────────────── */
+const hud = document.getElementById('hud');
+for (const [k, v] of Object.entries(STYLES)) {
+  const a = document.createElement('a');
+  a.href = `?style=${k}`; a.textContent = v.label;
+  if (k === KEY) a.classList.add('active');
+  hud.appendChild(a);
+}
+const back = document.createElement('a');
+back.href = '../'; back.textContent = '↩ gallery'; hud.appendChild(back);
+
+/* ── headless contract ────────────────────────────────────────────────────── */
+window.__seek = t => { pose(t % LOOP); renderer.render(scene, camera); };
+if (STILL) {
+  hud.classList.add('hide');
+  requestAnimationFrame(() => { window.__seek(stillT); window.__ready = true; });
+} else {
+  const clock = new THREE.Clock();
+  renderer.setAnimationLoop(() => {
+    const t = (clock.getElapsedTime()) % LOOP;
+    pose(t); renderer.render(scene, camera);
+    window.__ready = true;
+  });
+}
+</script>
+</body>
+</html>

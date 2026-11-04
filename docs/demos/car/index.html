@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jelly — City Car — Pro 3D Animator live demo</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #FDF6EC; overflow: hidden; }
+  #app { position: fixed; inset: 0; }
+  #hud { position: fixed; left: 12px; bottom: 12px; display: flex; gap: 10px; align-items: center;
+         font: 12px/1.5 system-ui, sans-serif; color: #5B4B49; background: #ffffffd9;
+         border-radius: 16px; padding: 8px 14px; box-shadow: 0 4px 14px #00000012; }
+  #hud b { font-size: 13px; }
+  #hud .badge { background: #FF6B6B; color: #fff; border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: 11px; }
+  #hud button { border: 0; border-radius: 999px; padding: 6px 13px; font-weight: 700; cursor: pointer;
+                background: #FF6B6B; color: #fff; }
+  #hud button:hover { filter: brightness(1.08); }
+  #hud button.ghost { background: #00000010; color: #5B4B49; }
+  #hud a { color: #5B4B49; opacity: .7; text-decoration: none; }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="hud">
+  <b>Jelly — City Car</b> <span class="badge">Puffy Product</span>
+  <span id="modes"><button data-mode="showroom">showroom</button> <button data-mode="drive">drive</button></span>
+  <span style="opacity:.55">drag to orbit · scroll to zoom</span>
+  <a href="../">↩ all demos</a>
+</div>
+
+<script type="importmap">
+{ "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { buildCar, animateCar, INFO } from '../../../examples/sports-car/threejs-car.js';
+
+/* ── URL contract (headless rendering: examples/render-frames.mjs) ────────── */
+const Q = new URLSearchParams(location.search);
+const STILL = Q.get('still') !== null;
+const stillT = STILL ? parseFloat(Q.get('t') ?? '0') : 0;
+let loop = parseFloat(Q.get('loop') ?? INFO.loop);
+let speed = parseFloat(Q.get('speed') ?? 1);
+let mode = Q.get('mode') ?? INFO.mode;
+
+/* ── renderer / scene / camera ────────────────────────────────────────────── */
+const W = STILL ? parseInt((Q.get('res') ?? '1280x720').split('x')[0]) : 960;
+const H = STILL ? parseInt((Q.get('res') ?? '1280x720').split('x')[1]) : 540;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(STILL ? 1 : Math.min(devicePixelRatio, 2));
+renderer.setSize(W, H);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.12;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.getElementById('app').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#FDF6EC');
+scene.fog = new THREE.Fog('#FDF6EC', 16, 60);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+
+/* ── lighting: soft three-point rig (works across styles) ─────────────────── */
+scene.add(new THREE.HemisphereLight('#FFF3E0', '#D9E4EC', 0.55));
+const key = new THREE.DirectionalLight('#FFFFFF', 1.6);
+key.position.set(6, 9, 6);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 45 });
+key.shadow.camera.updateProjectionMatrix();
+key.shadow.bias = -0.0002; key.shadow.normalBias = 0.02;
+scene.add(key);
+const fill = new THREE.DirectionalLight('#CFE3FF', 0.5); fill.position.set(-7, 4, -2); scene.add(fill);
+const rim  = new THREE.DirectionalLight('#FFD1DC', 0.7); rim.position.set(-2, 6, -8);  scene.add(rim);
+
+/* ── ground slab (soft, rounded — contact shadows land on it) ─────────────── */
+const ground = new THREE.Mesh(new RoundedBoxGeometry(16, 1.2, 12, 5, 0.5),
+  new THREE.MeshStandardMaterial({ color: '#D8D2C4', roughness: 0.75 }));
+ground.position.y = -0.6; ground.receiveShadow = true; scene.add(ground);
+
+/* ── model ────────────────────────────────────────────────────────────────── */
+const rig = buildCar();
+scene.add(rig.group);
+const sky = null;
+
+/* ── camera ───────────────────────────────────────────────────────────────── */
+const CAM = INFO.cam;
+const CHASE = CAM === 'chase';
+const camera = new THREE.PerspectiveCamera(CHASE ? 40 : CAM.fov, W / H, 0.1, 120);
+const controls = new OrbitControls(camera, renderer.domElement);
+if (!CHASE) {
+  camera.position.set(...CAM.position);
+  controls.target.set(...CAM.target);
+  controls.update();               // sync camera orientation (also needed in still mode)
+}
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI * 0.52;
+
+/* ── loop / still contract ────────────────────────────────────────────────── */
+function pose(t) {
+  animateCar(rig, t, { loop });
+  if (sky) sky.userData.animate(t);
+  if (CHASE) chaseCamera(camera, rig, t, { loop });
+}
+window.__seek = t => { pose(t % loop); renderer.render(scene, camera); };
+
+if (STILL) {
+  document.getElementById('hud').classList.add('hide');
+  requestAnimationFrame(() => { window.__seek(stillT); window.__ready = true; });
+} else {
+  const clock = new THREE.Clock();
+  renderer.setAnimationLoop(() => {
+    const t = (clock.getElapsedTime() * speed) % loop;
+    pose(t);
+    if (!CHASE) controls.update();
+    renderer.render(scene, camera);
+    window.__ready = true;
+  });
+  document.querySelectorAll('#hud button[data-mode]').forEach(b => {
+    if (b.dataset.mode === mode) b.classList.add('ghost');
+    b.addEventListener('click', () => {
+      mode = b.dataset.mode;
+      document.querySelectorAll('#hud button[data-mode]').forEach(x => x.classList.remove('ghost'));
+      b.classList.add('ghost');
+    });
+  });
+}
+</script>
+</body>
+</html>

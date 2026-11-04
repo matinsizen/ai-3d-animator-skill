@@ -7,7 +7,7 @@ A professional studio never starts rendering on a guess. Ask these questions **b
 1. **Subject** — "What should the animation show? (e.g., a coffee cup revealing steam, a rocket launch, your logo bouncing)"
 2. **Duration** — "How long? → 5 s / 8–10 s loop / 15 s / 30 s / other"
 3. **Resolution & frame rate** — "What resolution? → 1920×1080 @ 30 fps (landscape) / 1080×1920 @ 30 fps (vertical/Reels) / 1080×1080 (square) / 3840×2160 @ 60 fps (4K)"
-4. **Art style** — "Which style? → Puffy & bubbly / Claymation / Low-poly / Voxel / Isometric diorama / Neon cyberpunk / Cel-shaded anime / Frosted glass (see style guide for previews)"
+4. **Art style** — "Which style? → Puffy & bubbly / Claymation / Low-poly / Voxel / Isometric diorama / Neon cyberpunk / Cel-shaded anime / Frosted glass / Realistic PBR / Cartoon bold / Retro PS1 / Steampunk / Dark fantasy / Minimal flat (see `art-styles.md`, or show the user the live Style Lab at `docs/style-lab/` — one subject, all 14 styles)"
 5. **Sound** — "Sound design? → none / SFX only / SFX + music bed"
 6. **Output format** — "Deliverable? → MP4 video / WebM / looping GIF / live interactive web page (Three.js) / PNG stills"
 

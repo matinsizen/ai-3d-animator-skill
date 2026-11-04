@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Live Demos — Pro 3D Animator Skill</title>
+<style>
+  :root { --bg:#0F1318; --card:#171D24; --ink:#E8ECF1; --sub:#9AA7B4; --accent:#FF6B6B; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 system-ui,-apple-system,sans-serif; }
+  header { padding:56px 24px 28px; text-align:center; }
+  h1 { margin:0 0 10px; font-size:clamp(26px,4vw,40px); letter-spacing:-.5px; }
+  header p { margin:0 auto; max-width:640px; color:var(--sub); }
+  .badge { display:inline-block; background:#FF6B6B22; color:#FF9B9B; border:1px solid #FF6B6B55;
+           border-radius:999px; padding:4px 14px; font-size:13px; font-weight:600; margin-bottom:18px; }
+  main { max-width:1180px; margin:0 auto; padding:12px 24px 72px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:22px; }
+  a.card { display:block; text-decoration:none; color:inherit; background:var(--card); border-radius:18px;
+           overflow:hidden; border:1px solid #ffffff12; transition:transform .18s ease, border-color .18s ease; }
+  a.card:hover { transform:translateY(-4px); border-color:#FF6B6B66; }
+  .card img { width:100%; display:block; aspect-ratio:16/9; object-fit:cover; background:#000; }
+  .card .pad { padding:16px 18px 18px; }
+  .card h2 { margin:0 0 4px; font-size:18px; }
+  .card p { margin:0; color:var(--sub); font-size:14px; }
+  .tag { display:inline-block; margin-top:10px; font-size:11px; font-weight:700; letter-spacing:.4px;
+         text-transform:uppercase; color:#7FD8FF; background:#7FD8FF14; border-radius:999px; padding:3px 10px; }
+  section h2.title { font-size:22px; margin:42px 0 6px; }
+  section p.sub { color:var(--sub); margin:0 0 18px; font-size:14px; }
+  footer { text-align:center; color:var(--sub); font-size:13px; padding:0 24px 48px; }
+  footer a { color:#7FD8FF; }
+</style>
+</head>
+<body>
+<header>
+  <div class="badge">Pro 3D Animator · Live Demos · rendered 100% from code</div>
+  <h1>Example Models &amp; the 14-Style Lab</h1>
+  <p>Every model here is procedural — no external assets. They are the reference
+     implementations shipped with the <b>Pro 3D Animator</b> agent skill
+     (Three.js + Blender pipelines).</p>
+</header>
+<main>
+  <section>
+    <div class="grid">
+      <a class="card" href="demos/human/">
+        <img src="../docs/preview-human.png" alt="Milo — rigged human character walking">
+        <div class="pad"><h2>🧍 Milo — Stylized Human</h2>
+        <p>Full joint rig · walk / idle / wave · knee bend, counter-rotation, blinking.</p>
+        <span class="tag">Puffy / Bubbly</span></div>
+      </a>
+      <a class="card" href="demos/cat/">
+        <img src="../docs/preview-cat.png" alt="Mochi — puffy cat hopping">
+        <div class="pad"><h2>🐱 Mochi — Puffy Cat</h2>
+        <p>Zero sharp edges · squash &amp; stretch hop · sine tail with overlap.</p>
+        <span class="tag">Puffy / Bubbly</span></div>
+      </a>
+      <a class="card" href="demos/jet/">
+        <img src="../docs/preview-jet.png" alt="Swift — low-poly jet in banked patrol">
+        <div class="pad"><h2>✈️ Swift — Jet Fighter</h2>
+        <p>Lathe fuselage, extruded wings · banked patrol loop · chase camera.</p>
+        <span class="tag">Low-poly Flat</span></div>
+      </a>
+      <a class="card" href="demos/robot/">
+        <img src="../docs/preview-robot.png" alt="Bolt — toy mech robot patrolling">
+        <div class="pad"><h2>🤖 Bolt — Toy Mech</h2>
+        <p>Rounded-box hard surface · stomp walk with weight · pulsing emissives.</p>
+        <span class="tag">Toy + Neon</span></div>
+      </a>
+      <a class="card" href="demos/car/">
+        <img src="../docs/preview-car.png" alt="Jelly — cute city car on a turntable">
+        <div class="pad"><h2>🚗 Jelly — City Car</h2>
+        <p>Extruded beveled body · glass greenhouse · showroom &amp; drive modes.</p>
+        <span class="tag">Product / Clearcoat</span></div>
+      </a>
+      <a class="card" href="style-lab/">
+        <img src="../docs/style-matrix.png" alt="The same character art-directed in 14 styles">
+        <div class="pad"><h2>🎨 Style Lab — 14 art styles</h2>
+        <p>One subject, 14 art directions: palette + geometry + material + light + motion.</p>
+        <span class="tag">All 14 styles</span></div>
+      </a>
+    </div>
+  </section>
+  <section>
+    <h2 class="title">Try it headless</h2>
+    <p class="sub">Every demo honors the deterministic render contract used by the skill:</p>
+    <pre style="background:#0B0F13;border:1px solid #ffffff14;border-radius:12px;padding:16px;overflow:auto;font-size:13px;color:#C7D3DE"><code>docs/demos/human/index.html?still=1&amp;t=2.0&amp;res=1920x1080   # single deterministic frame
+docs/demos/cat/index.html?mode=loaf&amp;loop=6&amp;speed=1.5       # live view, custom loop</code></pre>
+  </section>
+</main>
+<footer>
+  Part of <a href="https://github.com/matinsizen/ai-3d-animator-skill">matinsizen/ai-3d-animator-skill</a> —
+  an open MIT-licensed agent skill. <code>SKILL.md</code> is the entry point.
+</footer>
+</body>
+</html>
