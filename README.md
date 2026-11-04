@@ -209,6 +209,7 @@ ai-3d-animator-skill/
 ├── docs/                             ← 🌐 GitHub Pages: live demos
 │   ├── index.html                    ← demo gallery
 │   ├── demos/{human,cat,jet,robot,car}/
+│   ├── models/                       ← generated copies of the example modules (Pages serves /docs only)
 │   ├── style-lab/index.html          ← one subject × 14 styles, switchable
 │   └── preview-*.png · style-matrix.png · human-walk.gif
 └── scripts/                          ← repo maintenance (demo generator, screenshots)

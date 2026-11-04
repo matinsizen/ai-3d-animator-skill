@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Generates the 5 live demo pages (docs/demos/<key>/index.html) + gallery (docs/index.html)
-for the Pro 3D Animator skill repo. Run from repo root:  python3 scripts/gen_demos.py"""
-import os, json
+for the Pro 3D Animator skill repo, and copies the example modules into docs/models/
+(GitHub Pages serves only /docs, so the demos must import their modules from inside it).
+Run from repo root:  python3 scripts/gen_demos.py"""
+import os, json, shutil
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -146,23 +148,23 @@ if (STILL) {{
 
 MODELS = [
     dict(key='human', title='Milo — Stylized Human', style='Puffy / Bubbly',
-         module='../../../examples/human-character/threejs-human.js', build='buildHuman',
+         module='../../models/human.js', src='examples/human-character/threejs-human.js', build='buildHuman',
          animate='animateHuman', bg='#FFF6EC', fg='#5B4B49', accent='#E8639B',
-         ground=('#B7E4C7', True), extra_imports=', chaseCamera as _chaseCam' if False else ''),
+         ground=('#B7E4C7', True), extra_imports=''),
     dict(key='cat', title='Mochi — Puffy Cat', style='Puffy / Bubbly',
-         module='../../../examples/fluffy-cat/threejs-cat.js', build='buildCat',
+         module='../../models/cat.js', src='examples/fluffy-cat/threejs-cat.js', build='buildCat',
          animate='animateCat', bg='#FFF6EC', fg='#5B4B49', accent='#FFADAD',
          ground=('#B7E4C7', True), extra_imports=''),
     dict(key='jet', title='Swift — Jet Fighter', style='Low-poly Flat',
-         module='../../../examples/jet-fighter/threejs-jet.js', build='buildJet',
+         module='../../models/jet.js', src='examples/jet-fighter/threejs-jet.js', build='buildJet',
          animate='animateJet', bg='#BDE0FE', fg='#264653', accent='#E76F51',
          ground=None, extra_imports=', buildSky, chaseCamera', sky=True),
     dict(key='robot', title='Bolt — Toy Mech', style='Toy Hard-surface',
-         module='../../../examples/robot-mech/threejs-robot.js', build='buildRobot',
+         module='../../models/robot.js', src='examples/robot-mech/threejs-robot.js', build='buildRobot',
          animate='animateRobot', bg='#E9EDF4', fg='#262B3A', accent='#00BBA7',
          ground=('#C9D3E0', True), extra_imports=''),
     dict(key='car', title='Jelly — City Car', style='Puffy Product',
-         module='../../../examples/sports-car/threejs-car.js', build='buildCar',
+         module='../../models/car.js', src='examples/sports-car/threejs-car.js', build='buildCar',
          animate='animateCar', bg='#FDF6EC', fg='#5B4B49', accent='#FF6B6B',
          ground=('#D8D2C4', True), extra_imports=''),
 ]
@@ -198,5 +200,12 @@ ground.position.y = -0.6; ground.receiveShadow = true; scene.add(ground);"""
     with open(out, 'w') as f:
         f.write(html)
     print('wrote', os.path.relpath(out, ROOT))
+
+# docs/models/ — Pages-served copies of the canonical example modules
+models_dir = os.path.join(ROOT, 'docs', 'models')
+os.makedirs(models_dir, exist_ok=True)
+for m in MODELS:
+    shutil.copyfile(os.path.join(ROOT, m['src']), os.path.join(models_dir, m['key'] + '.js'))
+    print('copied', m['src'], '→ docs/models/' + m['key'] + '.js')
 
 print('done')
