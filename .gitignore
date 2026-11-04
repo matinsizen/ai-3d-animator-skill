@@ -1,0 +1,23 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Renders & scratch output
+frames/
+*.mp4
+*.webm
+!docs/preview.gif
+tmp/
+dist/
+
+# Node (examples)
+node_modules/
+package-lock.json
+package.json
+
+# Blender
+*.blend1
+__pycache__/
